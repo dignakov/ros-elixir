@@ -66,14 +66,16 @@ defmodule ROS.Service do
   end
 
   def deserialize_response(data, type) do
-    {status_code, rest} = Satchel.unpack_take(data, :uint8)
+    {status_code, rest} = ROS.BinaryPacker.unpack_take(data, :uint8)
+    # {status_code, rest} = Satchel.unpack_take(data, :uint8)
 
     case status_code do
       1 ->
         type = Module.concat(type, Response)
 
         # strip the length header
-        {_length, rest} = Satchel.unpack_take(rest, :uint32)
+        {_length, rest} = ROS.BinaryPacker.unpack_take(rest, :uint32)
+        # {_length, rest} = Satchel.unpack_take(rest, :uint32)
 
         {:ok, ROS.Message.deserialize(rest, type)}
 

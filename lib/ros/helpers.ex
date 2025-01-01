@@ -21,7 +21,8 @@ defmodule ROS.Helpers do
           Map.put(unquote(state), :partial, packet)
         else
           # take away the header that says the size of the message
-          {_size, full_message} = Satchel.unpack_take(packet, :uint32)
+          {_size, full_message} = ROS.BinaryPacker.unpack_take(packet, :uint32)
+          # {_size, full_message} = Satchel.unpack_take(packet, :uint32)
 
           # call the function to do when the message has fully arrived
           full_message
@@ -36,7 +37,8 @@ defmodule ROS.Helpers do
 
   # determines if a packet is not the whole message
   def partial?(packet) do
-    {len, rest} = Satchel.unpack_take(packet, :uint32)
+    {len, rest} = ROS.BinaryPacker.unpack_take(packet, :uint32)
+    # {len, rest} = Satchel.unpack_take(packet, :uint32)
 
     String.length(rest) < len
   end
@@ -48,7 +50,8 @@ defmodule ROS.Helpers do
     len_field =
       str
       |> String.length()
-      |> Satchel.pack(:uint32)
+      |> ROS.BinaryPacker.pack(:uint32)
+      # |> Satchel.pack(:uint32)
 
     len_field <> str
   end

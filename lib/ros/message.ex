@@ -35,7 +35,8 @@ defmodule ROS.Message do
   # Splits a field off once. Used in the recursive implementation of split.
   @spec split_once(binary()) :: {binary(), binary()}
   def split_once(binary) do
-    field_length = Satchel.unpack(binary, :uint32)
+    field_length = ROS.BinaryPacker.unpack(binary, :uint32)
+    # field_length = Satchel.unpack(binary, :uint32)
 
     field =
       binary
@@ -118,19 +119,27 @@ defmodule ROS.Message do
 
           # Normal Built-in types
           true ->
-            Satchel.pack(Map.get(msg, name), type)
+            ROS.BinaryPacker.pack(Map.get(msg, name), type)
+            # Satchel.pack(Map.get(msg, name), type)
         end
 
       _serialize(other_types, acc <> addition, msg)
     end
 
     defp serialize_list(list, type) do
-      serialized_length = Satchel.pack(:uint32, length(list))
+      serialized_length = ROS.BinaryPacker.pack(length(list), :uint32)
+      # serialized_length = Satchel.pack(:uint32, length(list))
+
 
       serialized_list =
         list
-        |> Enum.map(&Satchel.pack(type, &1))
+        |> Enum.map(&ROS.BinaryPacker.pack(&1, type))
         |> Enum.join("")
+
+      # serialized_list =
+      #   list
+      #   |> Enum.map(&Satchel.pack(type, &1))
+      #   |> Enum.join("")
 
       serialized_length <> serialized_list
     end
@@ -176,14 +185,16 @@ defmodule ROS.Message do
             deserialize_take(binary, Atom.to_string(type))
 
           true ->
-            Satchel.unpack_take(binary, type)
+            ROS.BinaryPacker.unpack_take(binary, type)
+            # Satchel.unpack_take(binary, type)
         end
 
       _parse_take(rest, other_types, [{name, value} | acc])
     end
 
     defp unpack_take_list(binary, type) do
-      {list_length, rest} = Satchel.unpack_take(binary, :uint32)
+      {list_length, rest} = ROS.BinaryPacker.unpack_take(binary, :uint32)
+      # {list_length, rest} = Satchel.unpack_take(binary, :uint32)
 
       unpack_take_list(rest, type, list_length, [])
     end
@@ -191,14 +202,16 @@ defmodule ROS.Message do
     defp unpack_take_list(binary, _type, 0, acc), do: {acc, binary}
 
     defp unpack_take_list(binary, type, n, acc) do
-      {value, rest} = Satchel.unpack_take(binary, type)
+      {value, rest} = ROS.BinaryPacker.unpack_take(binary, type)
+      # {value, rest} = Satchel.unpack_take(binary, type)
 
       unpack_take_list(rest, type, n - 1, [value | acc])
     end
 
     # parse a module array
     defp deserialize_take_list(binary, type) do
-      {list_length, rest} = Satchel.unpack_take(binary, :uint32)
+      {list_length, rest} = ROS.BinaryPacker.unpack_take(binary, :uint32)
+      # {list_length, rest} = Satchel.unpack_take(binary, :uint32)
 
       deserialize_take_list(rest, type, list_length, [])
     end
