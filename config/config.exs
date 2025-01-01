@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # General application configuration
 config :ros,
@@ -9,4 +9,17 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-import_config "#{Mix.env()}.exs"
+import_config "#{config_env()}.exs"
+
+# use Mix.Config
+
+# # General application configuration
+# config :ros,
+#   namespace: ROS
+
+# # Configures Elixir's Logger
+# config :logger, :console,
+#   format: "$time $metadata[$level] $message\n",
+#   metadata: [:request_id]
+
+# import_config "#{Mix.env()}.exs"
