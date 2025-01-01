@@ -1,3 +1,35 @@
+# Updates
+
+## 1
+* removed mixes.lock to update dependencies as far as they can be updated
+* added pixi.toml to build ros messages
+* updating .gitignore
+* updated elixir version to 1.18
+
+###
+$mix deps.get
+
+$mix hex.outdated:
+Dependency   Current  Latest  Status               
+bite         0.1.1    0.1.1   Up-to-date           
+cowboy       2.12.0   2.12.0  Up-to-date           
+credo        0.10.2   1.7.11  Update not possible  
+dialyxir     0.5.1    1.4.5   Update not possible  
+ex_doc       0.19.1   0.36.1  Update not possible  
+excoveralls  0.18.3   0.18.3  Up-to-date           
+mox          0.4.0    1.2.0   Update not possible  
+private      0.1.2    0.1.2   Up-to-date           
+satchel      0.1.1    0.1.1   Up-to-date           
+xenium       0.1.0    0.1.0   Up-to-date 
+
+need to check on:
+
+credo        0.10.2   1.7.11  Update not possible  
+dialyxir     0.5.1    1.4.5   Update not possible  
+ex_doc       0.19.1   0.36.1  Update not possible  
+mox          0.4.0    1.2.0   Update not possible  
+
+
 # ROS - Elixir
 
 > Caution: I don't really work no this repo any more as I don't have a robot

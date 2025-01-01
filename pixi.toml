@@ -1,0 +1,23 @@
+[project]
+authors = ["Dmitri Ignakov <dmitri.ignakov@taigarobotics.com>"]
+channels = ["robostack-staging", "conda-forge"]
+description = "Add a short description here"
+name = "elixir_msggen"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[system-requirements]
+cuda = "12.4"
+
+[dependencies]
+ros-noetic-desktop = ">=1.5.0,<2"
+ros-noetic-ros-control = ">=0.20.0,<0.21"
+ros-noetic-kdl-parser-py = ">=1.14.2,<2"
+
+[pypi-dependencies]
+colcon-common-extensions = ">=0.3.0, <0.4"
+
+#[activation]
+#scripts = ["ros_workspace/install/setup.sh"]

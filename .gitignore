@@ -3,6 +3,7 @@
 /deps/
 /doc/
 /.fetch
+/.pixi
 erl_crash.dump
 *.ez
 ros-*.tar
