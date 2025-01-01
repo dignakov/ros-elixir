@@ -1,8 +1,89 @@
 # Config File Fixes
 
+## 2
+
+Changed Logger.warn --> Logger.warning in lib/ros/slave_api.ex
+
 ## 1
 change the Config imports
 
+
+# [1] Compile
+
+$ mix compile
+     warning: incompatible types given to Satchel.pack/2:
+
+         Satchel.pack(:uint32, length(list))
+
+     given types:
+
+         :uint32, integer()
+
+     but expected one of:
+
+         #1
+         dynamic(), dynamic(:bool)
+
+         #2
+         dynamic(), dynamic(:int8)
+
+         #3
+         dynamic(), dynamic(:uint8)
+
+         #4
+         dynamic(), dynamic(:int16)
+
+         #5
+         dynamic(), dynamic(:uint16)
+
+         #6
+         dynamic(), dynamic(:int32)
+
+         #7
+         dynamic(), dynamic(:uint32)
+
+         #8
+         dynamic(), dynamic(:int64)
+
+         #9
+         dynamic(), dynamic(:uint64)
+
+         #10
+         dynamic(), dynamic(:float32)
+
+         #11
+         dynamic(), dynamic(:float64)
+
+         #12
+         dynamic(), dynamic(:string)
+
+         #13
+         dynamic({term(), term()}), dynamic(:time)
+
+         #14
+         dynamic({term(), term()}), dynamic(:duration)
+
+     where "list" was given the type:
+
+         # type: dynamic()
+         # from: lib/ros/message.ex:127:25
+         list
+
+     typing violation found at:
+     │
+ 128 │       serialized_length = Satchel.pack(:uint32, length(list))
+     │                                   ~
+     │
+     └─ lib/ros/message.ex:128:35: ROS.Message.serialize_list/2
+
+    warning: Logger.warn/1 is deprecated. Use Logger.warning/2 instead
+    │
+ 77 │     Logger.warn(fn -> "no implementation for #{fun} in slave api" end)
+    │            ~
+    │
+    └─ lib/ros/slave_api.ex:77:12: ROS.SlaveApi.handle_call/3
+
+Generated ros app
 
 # Initial Compile
 
