@@ -36,19 +36,42 @@ defmodule ROS.Node do
 
   @impl Supervisor
   def init({ros_node, server, dispatch}) do
+    IO.puts "\n=== Starting Node Init ==="
+    IO.puts "Initial ros_node structure:"
+    IO.inspect ros_node, pretty: true, label: "ros_node"
+    IO.puts "\nInitial children:"
+    IO.inspect ros_node.children, pretty: true, label: "ros_node.children"
+
+
     uri =
       server
       |> NodeName.of()
       |> start_server(dispatch)
 
-    children = Enum.map(ros_node.children, &inform(&1, ros_node.name, uri))
+    IO.puts "\nGenerated URI:"
+    IO.inspect uri, label: "uri"
 
-    [
+    IO.puts "\nMapping children through inform/3..."
+    children = Enum.map(ros_node.children, &inform(&1, ros_node.name, uri))
+    # children = Enum.map(init_children, fn child ->
+    #   Supervisor.child_spec(child, id: make_ref())
+    # end)
+    IO.puts "\nFinal children after inform:"
+
+    IO.inspect children, pretty: true, label: "final children"
+    final_supervisor_children = [
       {ROS.SlaveApi,
        %ROS.SlaveApi{node_name: ros_node.name, children: children, uri: uri}}
       | children
     ]
-    |> Supervisor.init(strategy: :one_for_one)
+    IO.puts "\nFinal supervisor children list:"
+    IO.inspect final_supervisor_children, pretty: true, label: "supervisor children"
+
+    IO.puts "\nStarting supervisor init...\n"
+    result = Supervisor.init(final_supervisor_children, strategy: :one_for_one)
+    IO.puts "\nSupervisor init result:"
+    IO.inspect result, pretty: true, label: "supervisor init result"
+    result
   end
 
   @impl :cowboy_handler
@@ -89,6 +112,14 @@ defmodule ROS.Node do
     @spec inform({module(), struct()}, atom(), {String.t(), pos_integer()}) :: [
             {module(), Keyword.t()}
           ]
+    @spec inform(
+            {any(),
+             %{:node_name => any(), :uri => any(), optional(any()) => any()}},
+            any(),
+            any()
+          ) ::
+            {any(),
+             %{:node_name => any(), :uri => any(), optional(any()) => any()}}
     defp inform({type, child}, name, uri) do
       {type, %{child | node_name: name, uri: uri}}
     end
