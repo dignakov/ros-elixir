@@ -43,7 +43,7 @@ defmodule ROS.MixProject do
       {:cowboy, "~> 2.4"},
       {:xenium, "~> 0.1"},
       {:bite, "~> 0.1"},
-      {:satchel, "~> 0.1"},
+      # {:satchel, "~> 0.1"},
 
       # testing
       {:mox, "~> 0.4.0"},

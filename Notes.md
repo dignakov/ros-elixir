@@ -1,11 +1,55 @@
 # Config File Fixes
 
+## 3
+
+replaced satchel with a custom packer/unpacker
+
 ## 2
 
 Changed Logger.warn --> Logger.warning in lib/ros/slave_api.ex
 
 ## 1
 change the Config imports
+
+
+
+# Testing
+
+ros_tester
+
+pixi run mix mix genmsg  
+
+mix compile
+
+$ iex -S mix
+Erlang/OTP 27 [erts-15.1.2] [source] [64-bit] [smp:12:12] [ds:12:12:10] [async-threads:1] [jit:ns]
+
+
+18:58:39.154 [debug] Requesting: ["getUri", ["noname"]] from http://localhost:11311
+
+18:58:39.185 [debug] [1, "", "http://iris-3060:11311/"]
+
+18:58:39.194 [debug] Requesting: ["registerPublisher", ["/my_elixir_node", "/chatter", "std_msgs/String", "http://172.18.0.1:43227"]] from http://localhost:11311
+
+18:58:39.195 [debug] [1, "Registered [/my_elixir_node] as publisher of [/chatter]", []]
+
+18:58:39.196 [debug] Requesting: ["registerSubscriber", ["/my_elixir_node", "incoming_topic", "std_msgs/String", "http://172.18.0.1:43227"]] from http://localhost:11311
+
+18:58:39.197 [debug] [1, "Subscribed to [/incoming_topic]", []]
+
+18:58:39.197 [debug] Requesting: ["getSystemState", ["/my_elixir_node_incoming_topic"]] from http://localhost:11311
+
+18:58:39.198 [debug] [1, "current system state", [[["/rosout_agg", ["/rosout"]], ["/chatter", ["/my_elixir_node"]]], [["/rosout", ["/rosout"]], ["/incoming_topic", ["/my_elixir_node"]]], [["/rosout/get_loggers", ["/rosout"]], ["/rosout/set_logger_level", ["/rosout"]]]]]
+Interactive Elixir (1.18.1) - press Ctrl+C to exit (type h() ENTER for help)
+iex(1)> RosTester.MessageSender.send_message("Hello from Elixir!")
+:ok
+
+18:59:10.270 [debug] Received %XMLRPC.MethodCall{method_name: "requestTopic", params: ["/rostopic_289_1735775950133", "/chatter", [["TCPROS"]]]}.
+iex(2)> RosTester.MessageSender.send_message("Hello from Elixir!")
+:ok
+
+
+
 
 
 # [1] Compile
