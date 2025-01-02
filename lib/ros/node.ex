@@ -59,11 +59,31 @@ defmodule ROS.Node do
     IO.puts "\nFinal children after inform:"
 
     IO.inspect children, pretty: true, label: "final children"
-    final_supervisor_children = [
+
+    # final_supervisor_children = [
+    #   {ROS.SlaveApi,
+    #    %ROS.SlaveApi{node_name: ros_node.name, children: children, uri: uri}}
+    #   | children
+    # ]
+    final_supervisor_children =
+    [
+      # SlaveAPI keeps its module name as ID since it's unique
       {ROS.SlaveApi,
        %ROS.SlaveApi{node_name: ros_node.name, children: children, uri: uri}}
-      | children
+      | Enum.map(children, fn child ->
+          case child do
+            {ROS.Publisher, pub} = original_child ->
+              # Use publisher name as unique ID
+              Supervisor.child_spec(original_child, id: pub.name)
+            {ROS.Subscriber, sub} = original_child ->
+              # Use topic as unique ID for subscribers since they don't have names
+              Supervisor.child_spec(original_child, id: String.to_atom(sub.topic))
+            other ->
+              other
+          end
+        end)
     ]
+
     IO.puts "\nFinal supervisor children list:"
     IO.inspect final_supervisor_children, pretty: true, label: "supervisor children"
 
