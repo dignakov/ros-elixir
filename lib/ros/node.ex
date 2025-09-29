@@ -1,8 +1,3 @@
-defprotocol NodeName do
-  @moduledoc false
-  # gives atom names to things, so they can be called as GenServers
-  def of(structure)
-end
 
 defmodule ROS.Node do
   use Supervisor

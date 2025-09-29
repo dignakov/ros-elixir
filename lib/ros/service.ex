@@ -249,9 +249,3 @@ defmodule ROS.Service do
     end
   end
 end
-
-defimpl NodeName, for: ROS.Service do
-  def of(%ROS.Service{node_name: node_name, service: service}) do
-    String.to_atom("#{node_name}_#{service}")
-  end
-end
