@@ -20,7 +20,17 @@ defmodule ROS.MixProject do
         main: "readme",
         source_ref: "v#{@version}",
         extras: ["README.md"] # ensure "readme" exists
-      ]
+      ],
+      msg: messages()
+    ]
+  end
+
+  def messages do
+    [
+      # generate all of std_msgs (easy)
+      {:pattern, "std_msgs"}
+      # or just what you need:
+      # "std_msgs/String"
     ]
   end
 
