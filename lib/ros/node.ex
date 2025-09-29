@@ -41,14 +41,26 @@ defmodule ROS.Node do
       |> NodeName.of()
       |> start_server(dispatch)
 
-    children = Enum.map(ros_node.children, &inform(&1, ros_node.name, uri))
+    # 1) Update each child tuple with node_name/uri (tuples are what SlaveApi expects)
+    children_tuples =
+      ros_node.children
+      |> Enum.map(&inform_tuple(&1, ros_node.name, uri))
+      # ensure they stay as {Module, struct}
+      |> Enum.map(fn {mod, struct} -> {mod, struct} end)
 
-    [
-      {ROS.SlaveApi,
-       %ROS.SlaveApi{node_name: ros_node.name, children: children, uri: uri}}
-      | children
-    ]
-    |> Supervisor.init(strategy: :one_for_one)
+    # 2) Turn those tuples into proper child_specs with unique ids (for Supervisor)
+    child_specs = Enum.map(children_tuples, &to_child_spec/1)
+
+    # 3) Supervise the Slave API; pass it the ORIGINAL tuples, not specs
+    slave_spec =
+      Supervisor.child_spec(
+        {ROS.SlaveApi,
+         %ROS.SlaveApi{node_name: ros_node.name, children: children_tuples, uri: uri}},
+        id: {:slave_api, ros_node.name},
+        type: :worker
+      )
+
+    Supervisor.init([slave_spec | child_specs], strategy: :one_for_one)
   end
 
   @impl :cowboy_handler
@@ -70,7 +82,6 @@ defmodule ROS.Node do
     @spec start_server(atom(), any()) :: {String.t(), pos_integer()}
     defp start_server(name, dispatch) do
       :cowboy.start_clear(name, [], %{env: %{dispatch: dispatch}})
-
       {local_ip(), :ranch.get_port(name)}
     end
 
@@ -86,14 +97,32 @@ defmodule ROS.Node do
       |> Enum.join(".")
     end
 
-    @spec inform({module(), struct()}, atom(), {String.t(), pos_integer()}) :: [
-            {module(), Keyword.t()}
-          ]
-    defp inform({type, child}, name, uri) do
-      {type, %{child | node_name: name, uri: uri}}
+    # --- child plumbing -----------------------------------------------------
+
+    # Update the tuple with node_name/uri (keeps shape {Module, struct})
+    @spec inform_tuple({module(), struct()}, atom(), {String.t(), pos_integer()}) ::
+            {module(), struct()}
+    defp inform_tuple({mod, child}, name, uri) do
+      {mod, %{child | node_name: name, uri: uri}}
     end
 
-    # stuff for cowboy server
+    # Build a child_spec with a unique id for Supervisor
+    @spec to_child_spec({module(), struct()}) :: Supervisor.child_spec()
+    defp to_child_spec({mod, child} = tuple) do
+      Supervisor.child_spec(
+        {mod, child},
+        id: child_id(tuple),
+        type: :worker
+      )
+    end
+
+    # Stable unique ids per child type (so multiple publishers/subscribers can coexist)
+    defp child_id({ROS.Publisher, %ROS.Publisher{name: name}}), do: {:publisher, name}
+    defp child_id({ROS.Subscriber, %ROS.Subscriber{topic: topic}}), do: {:subscriber, topic}
+    defp child_id({ROS.Service, %ROS.Service{service: svc}}), do: {:service, svc}
+    defp child_id({mod, _}), do: {:child, mod}
+
+    # --- cowboy XML-RPC handler --------------------------------------------
 
     @spec handle(any(), atom()) :: any()
     defp handle(req, api_server_name) do
@@ -104,7 +133,6 @@ defmodule ROS.Node do
       else
         a ->
           Logger.error(a)
-
           req
       end
     end
@@ -115,9 +143,7 @@ defmodule ROS.Node do
            api_server_name
          ) do
       Logger.debug(fn -> "Received #{inspect(msg)}." end)
-
       return = ROS.SlaveApi.call(api_server_name, fun, args)
-
       XMLRPC.encode!(%XMLRPC.MethodResponse{param: return})
     end
   end

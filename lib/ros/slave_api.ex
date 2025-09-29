@@ -88,12 +88,13 @@ defmodule ROS.SlaveApi do
       |> Map.put(:slave_api, slave_api)
     end
 
+
     defp add_to_map({ROS.Publisher, pub}, acc) do
-      put_in(acc[:local_pubs], %{pub.topic => pub})
+      Map.update(acc, :local_pubs, %{pub.topic => pub}, fn m -> Map.put(m, pub.topic, pub) end)
     end
 
     defp add_to_map({ROS.Subscriber, sub}, acc) do
-      put_in(acc[:local_subs], %{sub.topic => sub})
+      Map.update(acc, :local_subs, %{sub.topic => sub}, fn m -> Map.put(m, sub.topic, sub) end)
     end
 
     defp add_to_map(_, acc), do: acc
