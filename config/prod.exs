@@ -1,4 +1,4 @@
-use Mix.Config
+# config/dev.exs
+import Config
 
-# Do not print debug messages in production
-config :logger, level: :info
+# (add dev-only config here if needed)

@@ -1,4 +1,4 @@
-use Mix.Config
+# config/dev.exs
+import Config
 
-# Print only warnings and errors during test
-config :logger, level: :warn
+# (add dev-only config here if needed)

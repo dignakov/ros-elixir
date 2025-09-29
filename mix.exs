@@ -8,7 +8,7 @@ defmodule ROS.MixProject do
     [
       app: :ros,
       version: @version,
-      elixir: "~> 1.17", # Targeting the latest stable branch is often safer
+      elixir: "~> 1.17",
       elixirc_paths: ["lib"],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -17,43 +17,43 @@ defmodule ROS.MixProject do
       package: package(),
       source_url: @source_url,
       docs: [
-        main: "readme", # A good default for the main docs page
-        source_ref: "v#{@version}"
-        # Removed the call to the missing extras/0 function
+        main: "readme",
+        source_ref: "v#{@version}",
+        extras: ["README.md"] # ensure "readme" exists
       ]
     ]
   end
 
   def application do
     [
-      # :runtime_tools is often not needed explicitly
       extra_applications: [:logger]
     ]
   end
 
   defp deps do
     [
-      # Runtime dependencies
-      {:cowboy, "~> 2.10"},
+      # Runtime
+      {:cowboy, "~> 2.14"},
+      # If you use Plug, uncomment:
+      # {:plug_cowboy, "~> 2.7"},
       {:req, "~> 0.5"},
-      {:exmlrpc, "~> 0.4.0"}, # Switched to the more standard exmlrpc library
+      {:xmlrpc, "~> 1.4"},
+      {:private, "~> 0.1.2"},
 
-      # NOTE: The :binary dependency was removed. Use Elixir's native <<>> syntax.
-
-      # Dev/Docs dependencies
-      {:ex_doc, "~> 0.31", only: [:dev, :docs], runtime: false}
+      # Dev/Docs
+      {:ex_doc, "~> 0.38", only: :dev, runtime: false}
     ]
   end
 
   defp package do
     [
       maintainers: ["mostly robots"],
-      licenses: ["BSD-3-Clause"], # Using SPDX identifier is best practice
-      links: %{"GitHub" => @source_url}, # Capitalized "GitHub" key
+      licenses: ["BSD-3-Clause"],
+      links: %{"GitHub" => @source_url},
       files: ~w(lib LICENSE mix.exs README.md .formatter.exs)
     ]
   end
 
-  # No test aliases or coverage tooling; tests effectively disabled for now.
+  # No test aliases/coverage: tests disabled for now.
   defp aliases, do: []
 end

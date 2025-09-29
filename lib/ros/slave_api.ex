@@ -74,7 +74,8 @@ defmodule ROS.SlaveApi do
   end
 
   def handle_call({fun, _params}, _from, state) do
-    Logger.warn(fn -> "no implementation for #{fun} in slave api" end)
+    # Logger.warn(fn -> "no implementation for #{fun} in slave api" end)
+    Logger.warning(fn -> "no implementation for #{fun} in slave api" end)
     {:reply, [-1, "method not found", fun], state}
   end
 

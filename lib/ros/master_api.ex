@@ -84,7 +84,7 @@ defmodule ROS.MasterApi do
     end)
 
     call =
-      case Xenium.call(target, name, args) do
+      case ROS.RPC.call(target, name, args) do
         {:error, reason} ->
           raise "Error contacting ROS Master! Is `roscore` running? #{
                   inspect(reason)
