@@ -1,4 +1,4 @@
-forked from forked from https://github.com/the-mikedavis/ros
+forked from https://github.com/the-mikedavis/ros
 
 # ROS - Elixir
 
