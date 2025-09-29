@@ -65,5 +65,5 @@ defmodule ROS.MixProject do
   end
 
   # No test aliases/coverage: tests disabled for now.
-  defp aliases, do: []
+  # defp aliases, do: []
 end
