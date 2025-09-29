@@ -6,13 +6,13 @@ defmodule ROS.SlaveApi do
   @moduledoc false
 
   @default_state %{
-    remote_publishers: %{},   # topic => [uris] as reported by master
-    connected: %{}            # topic => MapSet of URIs we've already connected to
+    remote_publishers: %{},   # topic => [uris]
+    connected: %{}            # topic => MapSet(uris) we've already asked to connect
   }
 
   defstruct [:children, :node_name, :uri]
 
-  # ---- Public API -----------------------------------------------------------
+  # -- Public ---------------------------------------------------------------
 
   @spec start_link(struct()) :: GenServer.on_start()
   def start_link(server),
@@ -28,32 +28,28 @@ defmodule ROS.SlaveApi do
   @spec master_uri() :: String.t() | nil
   def master_uri, do: System.get_env("ROS_MASTER_URI")
 
-  # ---- Helpers --------------------------------------------------------------
+  # -- Helpers --------------------------------------------------------------
 
-  # Normalize a ROS XML-RPC URI (drop trailing slash)
   defp norm_uri(uri) when is_binary(uri), do: String.trim_trailing(uri, "/")
   defp norm_uri(uri), do: uri
 
-  # Is this XML-RPC URI pointing to *this* node's Cowboy server?
   defp self_uri?(pub_uri, {ip, cowboy_port}) do
     case URI.parse(pub_uri) do
       %URI{host: host, port: port} when is_binary(host) and is_integer(port) ->
-        # Match on port first (most discriminative), then accept either the
-        # literal IP we advertise or the loopback form we might see.
         port == cowboy_port and (host == ip or host == "127.0.0.1")
       _ ->
         false
     end
   end
 
-  # ---- GenServer callbacks --------------------------------------------------
+  # -- Callbacks ------------------------------------------------------------
 
   @impl GenServer
-  def handle_call({"getMasterUri", [_caller_id]}, _from, state) do
+  def handle_call({"getMasterUri", [_]}, _from, state) do
     {:reply, [1, "ROS Master Uri", master_uri()], state}
   end
 
-  # Master says there are zero publishers for this topic
+  # Zero publishers
   @impl GenServer
   def handle_call({"publisherUpdate", ["/master", topic, []]}, _from, state) do
     state =
@@ -61,10 +57,10 @@ defmodule ROS.SlaveApi do
       |> put_in([:remote_publishers, topic], [])
       |> put_in([:connected, topic], MapSet.new())
 
-    {:reply, [1, "thanks for the update.", 0], state}
+    {:reply, [1, "ok", 0], state}
   end
 
-  # Master provides a non-empty list
+  # Some publishers
   @impl GenServer
   def handle_call({"publisherUpdate", ["/master", topic, publisher_list]}, _from,
                   %{local_subs: all_subs, slave_api: %{uri: self_uri}} = state) do
@@ -72,20 +68,16 @@ defmodule ROS.SlaveApi do
       publisher_list
       |> Enum.map(&norm_uri/1)
       |> Enum.uniq()
-      # >>> IMPORTANT: drop our own node URI so we don't connect to ourselves
       |> Enum.reject(&self_uri?(&1, self_uri))
 
     Logger.debug(fn -> "[SlaveApi] publisherUpdate topic=#{inspect(topic)} uris=#{inspect(uris)}" end)
 
     state =
-      put_in(
-        state[:remote_publishers],
-        Map.put(state.remote_publishers || %{}, topic, uris)
-      )
+      put_in(state[:remote_publishers], Map.put(state.remote_publishers || %{}, topic, uris))
 
     case Map.fetch(all_subs || %{}, topic) do
       :error ->
-        {:reply, [1, "go fish. i don't have that sub.", 1], state}
+        {:reply, [1, "no local sub", 1], state}
 
       {:ok, sub} ->
         already = Map.get(state.connected || %{}, topic, MapSet.new())
@@ -101,21 +93,16 @@ defmodule ROS.SlaveApi do
         end)
 
         new_connected = MapSet.union(already, MapSet.new(to_connect))
+        state = put_in(state[:connected], Map.put(state.connected || %{}, topic, new_connected))
 
-        state =
-          put_in(
-            state[:connected],
-            Map.put(state.connected || %{}, topic, new_connected)
-          )
-
-        {:reply, [1, "publisher list for #{topic} updated.", 0], state}
+        {:reply, [1, "ok", 0], state}
     end
   end
 
-  # Remote subscriber asks us (a publisher) for TCPROS details
+  # Remote subscriber asks us (we're a publisher) how to connect
   @impl GenServer
   def handle_call({"requestTopic", [_caller_id, topic, [["TCPROS"]]]}, _from,
-                  %{local_pubs: pubs, slave_api: %{uri: {ip, _port}}} = state) do
+                  %{local_pubs: pubs, slave_api: %{uri: {ip, _}}} = state) do
     candidates = [topic, String.trim_leading(topic, "/"), "/" <> String.trim_leading(topic, "/")]
     pub = Enum.find_value(candidates, fn k -> Map.get(pubs || %{}, k) end)
 
@@ -132,12 +119,12 @@ defmodule ROS.SlaveApi do
 
   # Fallback
   @impl GenServer
-  def handle_call({fun, _params}, _from, state) do
+  def handle_call({fun, _}, _from, state) do
     Logger.warning(fn -> "no implementation for #{fun} in slave api" end)
     {:reply, [-1, "method not found", fun], state}
   end
 
-  # ---- Private --------------------------------------------------------------
+  # -- Private --------------------------------------------------------------
 
   private do
     @spec consume(%ROS.SlaveApi{}) :: map()
