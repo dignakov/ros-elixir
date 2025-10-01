@@ -6,4 +6,4 @@
 erl_crash.dump
 *.ez
 ros-*.tar
-lib/generated_*
+#lib/generated_*

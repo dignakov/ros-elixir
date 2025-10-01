@@ -21,16 +21,23 @@ defmodule ROS.MixProject do
         source_ref: "v#{@version}",
         extras: ["README.md"] # ensure "readme" exists
       ],
-      msg: messages()
+      msg: messages(),
+      srv: srvs()
     ]
   end
 
   def messages do
     [
       # generate all of std_msgs (easy)
-      {:pattern, "std_msgs"}
+      {:pattern, "/"}
       # or just what you need:
       # "std_msgs/String"
+    ]
+  end
+
+  def srvs do
+    [
+      {:pattern, "/"}      # all services
     ]
   end
 

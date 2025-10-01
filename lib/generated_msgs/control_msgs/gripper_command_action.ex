@@ -1,0 +1,95 @@
+defmodule Elixir.ControlMsgs.GripperCommandAction do
+  @moduledoc false
+  @behaviour ROS.Message.Behaviour
+
+  @type t :: %__MODULE__{
+          action_goal: Elixir.ControlMsgs.GripperCommandActionGoal.t(),
+          action_result: Elixir.ControlMsgs.GripperCommandActionResult.t(),
+          action_feedback: Elixir.ControlMsgs.GripperCommandActionFeedback.t()
+        }
+
+  defstruct action_goal: %Elixir.ControlMsgs.GripperCommandActionGoal{},
+            action_result: %Elixir.ControlMsgs.GripperCommandActionResult{},
+            action_feedback: %Elixir.ControlMsgs.GripperCommandActionFeedback{}
+
+  @impl ROS.Message.Behaviour
+  def md5sum, do: "950b2a6ebe831f5d4f4ceaba3d8be01e"
+
+  @impl ROS.Message.Behaviour
+  def definition do
+    """
+    control_msgs/GripperCommandActionGoal action_goal
+      std_msgs/Header header
+        uint32 seq
+        time stamp
+        string frame_id
+      actionlib_msgs/GoalID goal_id
+        time stamp
+        string id
+      control_msgs/GripperCommandGoal goal
+        control_msgs/GripperCommand command
+          float64 position
+          float64 max_effort
+    control_msgs/GripperCommandActionResult action_result
+      std_msgs/Header header
+        uint32 seq
+        time stamp
+        string frame_id
+      actionlib_msgs/GoalStatus status
+        uint8 PENDING=0
+        uint8 ACTIVE=1
+        uint8 PREEMPTED=2
+        uint8 SUCCEEDED=3
+        uint8 ABORTED=4
+        uint8 REJECTED=5
+        uint8 PREEMPTING=6
+        uint8 RECALLING=7
+        uint8 RECALLED=8
+        uint8 LOST=9
+        actionlib_msgs/GoalID goal_id
+          time stamp
+          string id
+        uint8 status
+        string text
+      control_msgs/GripperCommandResult result
+        float64 position
+        float64 effort
+        bool stalled
+        bool reached_goal
+    control_msgs/GripperCommandActionFeedback action_feedback
+      std_msgs/Header header
+        uint32 seq
+        time stamp
+        string frame_id
+      actionlib_msgs/GoalStatus status
+        uint8 PENDING=0
+        uint8 ACTIVE=1
+        uint8 PREEMPTED=2
+        uint8 SUCCEEDED=3
+        uint8 ABORTED=4
+        uint8 REJECTED=5
+        uint8 PREEMPTING=6
+        uint8 RECALLING=7
+        uint8 RECALLED=8
+        uint8 LOST=9
+        actionlib_msgs/GoalID goal_id
+          time stamp
+          string id
+        uint8 status
+        string text
+      control_msgs/GripperCommandFeedback feedback
+        float64 position
+        float64 effort
+        bool stalled
+        bool reached_goal
+    """
+  end
+
+  @impl ROS.Message.Behaviour
+  def types,
+    do: [
+      action_goal: :"control_msgs/GripperCommandActionGoal",
+      action_result: :"control_msgs/GripperCommandActionResult",
+      action_feedback: :"control_msgs/GripperCommandActionFeedback"
+    ]
+end

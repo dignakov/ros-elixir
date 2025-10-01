@@ -295,6 +295,10 @@ defmodule ROS.Compiler do
     defp spec("int" <> _byte_size), do: {"integer()", "0"}
     defp spec("uint" <> _byte_size), do: {"non_neg_integer()", "0"}
     defp spec("float" <> _byte_size), do: {"float()", "0.0"}
+
+    defp spec("byte"), do: {"integer()", "0"}          # ROS1 alias of int8
+    defp spec("char"), do: {"non_neg_integer()", "0"}  # ROS1 alias of uint8
+
     @times ["time", "duration"]
     defp spec(t) when t in @times do
       {:ok, time} = Time.new(0, 0, 0)
