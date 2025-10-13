@@ -107,7 +107,8 @@ defmodule ROS.Service.Proxy do
             {:ok, String.t()} | {:error, :noservices}
     defp lookup_service(proxy) do
       case ROS.MasterApi.lookup_service(proxy) do
-        [1, _, uri] ->
+        # [1, _, uri] ->
+        {:ok, [1, _, uri]} ->
           {:ok, uri}
 
         _ ->
