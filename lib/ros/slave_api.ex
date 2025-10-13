@@ -26,7 +26,7 @@ defmodule ROS.SlaveApi do
 
   @doc "Gets the master URI pointed to by the env var ROS_MASTER_URI"
   @spec master_uri() :: String.t() | nil
-  def master_uri, do: System.get_env("ROS_MASTER_URI")
+  def master_uri, do: System.get_env("ROS_MASTER_URI", "http://localhost:11311")
 
   # -- Helpers --------------------------------------------------------------
 
