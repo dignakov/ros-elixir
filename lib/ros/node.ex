@@ -115,6 +115,7 @@ defmodule ROS.Node do
     defp child_id({ROS.Publisher, %ROS.Publisher{name: name}}), do: {:publisher, name}
     defp child_id({ROS.Subscriber, %ROS.Subscriber{topic: topic}}), do: {:subscriber, topic}
     defp child_id({ROS.Service, %ROS.Service{service: svc}}), do: {:service, svc}
+    defp child_id({ROS.Service.Proxy, %ROS.Service.Proxy{name: name}}), do: {:service_proxy, name}
     defp child_id({mod, _}), do: {:child, mod}
 
     # --- cowboy XML-RPC handler --------------------------------------------
