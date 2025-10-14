@@ -5,6 +5,7 @@ defmodule ROS.MasterMonitor do
   alias ROS.MasterApi
   alias ROS.RPC
 
+  @timeout 300_000
   @check_interval 1_000
   @rosout_node "/rosout"
   @caller_id :ros_master_monitor
@@ -15,9 +16,21 @@ defmodule ROS.MasterMonitor do
 
   @impl true
   def init(_opts) do
-    Logger.info("Starting ROS Master monitor by tracking '#{@rosout_node}'...")
-    send(self(), :attempt_initial_connection)
-    {:ok, %{rosout_uri: nil, rosout_pid: nil, initialized: false}}
+    # Logger.info("Starting ROS Master monitor by tracking '#{@rosout_node}'...")
+    # interval = Keyword.get(opts, :check_interval, 1_000) # 1 second
+    Logger.info("ROS.MasterMonitor starting. Waiting for ROS Master for up to #{@timeout / 1000} seconds...")
+    case wait_for_rosout(@timeout, @check_interval) do
+      {:ok, uri, pid} ->
+        Logger.info("Successfully connected to #{@rosout_node} (PID: #{pid}). Monitoring has started.")
+        schedule_next_check()
+        {:ok, %{rosout_uri: uri, rosout_pid: pid, initialized: true}}
+
+      {:error, reason} ->
+        Logger.error("Failed to connect to ROS Master within the timeout. Reason: #{inspect(reason)}")
+        {:stop, :initial_connection_failed}
+    end
+    # send(self(), :attempt_initial_connection)
+    # {:ok, %{rosout_uri: nil, rosout_pid: nil, initialized: false}}
     # with {:ok, [1, _, uri]} <- MasterApi.lookup_node(@caller_id, @rosout_node),
     #      {:ok, [1, _, pid]} <- RPC.call(uri, "getPid", [Atom.to_string(@caller_id)]) do
     #   Logger.info("Successfully connected to #{@rosout_node} (PID: #{pid}, URI: #{uri}). Monitoring has started.")
@@ -81,6 +94,18 @@ defmodule ROS.MasterMonitor do
   #     error -> {:error, error}
   #   end
   # end
+
+  defp wait_for_rosout(timeout, interval) when timeout > 0 do
+    case check_rosout_status() do
+      {:ok, uri, pid} ->
+        {:ok, uri, pid}
+
+      {:error, _reason} ->
+        Process.sleep(interval)
+        wait_for_rosout(timeout - interval, interval)
+    end
+  end
+  defp wait_for_rosout(_timeout, _interval), do: {:error, :timeout}
 
   defp check_rosout_status() do
     try do

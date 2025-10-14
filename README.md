@@ -12,16 +12,16 @@ cb2 = fn %StdMsgs.String{data: m} -> IO.puts("[sub2] #{m}") end
 
 # --- Define the children for the top-level supervisor ---
 children = [
-  # 1. Your ROS node definition remains the same
+  # 1. Master Monitor to ensure ros is up
+  {ROS.MasterMonitor, []},
+  
+  # 2. Your ROS node definition
   node(:"/elixir_node", [
     publisher(:talker1, "/chatter1", "std_msgs/String"),
     publisher(:talker2, "/chatter2", "std_msgs/String"),
     subscriber("/chatter1", "std_msgs/String", cb1),
     subscriber("/chatter2", "std_msgs/String", cb2)
-  ]),
-
-  # 2. Add the MasterMonitor as a sibling worker
-  {ROS.MasterMonitor, []}
+  ])
 ]
 
 # 3. Start the top-level supervisor with the :one_for_all strategy
