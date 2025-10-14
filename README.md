@@ -1,5 +1,37 @@
 forked from https://github.com/the-mikedavis/ros
 
+# WIP
+
+```
+
+use ROS
+
+# --- Your existing setup ---
+cb1 = fn %StdMsgs.String{data: m} -> IO.puts("[sub1] #{m}") end
+cb2 = fn %StdMsgs.String{data: m} -> IO.puts("[sub2] #{m}") end
+
+# --- Define the children for the top-level supervisor ---
+children = [
+  # 1. Your ROS node definition remains the same
+  node(:"/elixir_node", [
+    publisher(:talker1, "/chatter1", "std_msgs/String"),
+    publisher(:talker2, "/chatter2", "std_msgs/String"),
+    subscriber("/chatter1", "std_msgs/String", cb1),
+    subscriber("/chatter2", "std_msgs/String", cb2)
+  ]),
+
+  # 2. Add the MasterMonitor as a sibling worker
+  {ROS.MasterMonitor, []}
+]
+
+# 3. Start the top-level supervisor with the :one_for_all strategy
+{:ok, _sup} =
+  Supervisor.start_link(
+    children,
+    strategy: :one_for_all # <-- This is the crucial change
+  )
+```
+
 # ROS - Elixir
 
 
