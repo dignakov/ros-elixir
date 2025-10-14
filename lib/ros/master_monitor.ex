@@ -16,21 +16,39 @@ defmodule ROS.MasterMonitor do
   @impl true
   def init(_opts) do
     Logger.info("Starting ROS Master monitor by tracking '#{@rosout_node}'...")
+    send(self(), :attempt_initial_connection)
+    {:ok, %{rosout_uri: nil, rosout_pid: nil, initialized: false}}
+    # with {:ok, [1, _, uri]} <- MasterApi.lookup_node(@caller_id, @rosout_node),
+    #      {:ok, [1, _, pid]} <- RPC.call(uri, "getPid", [Atom.to_string(@caller_id)]) do
+    #   Logger.info("Successfully connected to #{@rosout_node} (PID: #{pid}, URI: #{uri}). Monitoring has started.")
+    #   schedule_next_check()
+    #   {:ok, %{rosout_uri: uri, rosout_pid: pid}}
+    # else
+    #   error ->
+    #     Logger.error("Could not establish initial connection to #{@rosout_node}. Is roscore running? Error: #{inspect(error)}")
+    #     {:stop, :initial_connection_failed}
+    # end
+  end
 
-    with {:ok, [1, _, uri]} <- MasterApi.lookup_node(@caller_id, @rosout_node),
-         {:ok, [1, _, pid]} <- RPC.call(uri, "getPid", [Atom.to_string(@caller_id)]) do
-      Logger.info("Successfully connected to #{@rosout_node} (PID: #{pid}, URI: #{uri}). Monitoring has started.")
-      schedule_next_check()
-      {:ok, %{rosout_uri: uri, rosout_pid: pid}}
-    else
-      error ->
-        Logger.error("Could not establish initial connection to #{@rosout_node}. Is roscore running? Error: #{inspect(error)}")
-        {:stop, :initial_connection_failed}
+  @impl true
+  def handle_info(:attempt_initial_connection, state) do
+    case check_rosout_status() do
+      {:ok, uri, pid} ->
+        # Success! Store the baseline and start the regular checks.
+        Logger.info("Successfully connected to #{@rosout_node} (PID: #{pid}, URI: #{uri}). Monitoring has started.")
+        schedule_next_check()
+        {:noreply, %{rosout_uri: uri, rosout_pid: pid, initialized: true}}
+
+      {:error, reason} ->
+        # Failure. Log it and schedule another attempt.
+        Logger.warning("Could not connect to #{@rosout_node}, retrying in #{@check_interval}ms. Reason: #{inspect(reason)}")
+        Process.send_after(self(), :attempt_initial_connection, @check_interval)
+        {:noreply, state}
     end
   end
 
   @impl true
-  def handle_info(:check_master, state) do
+  def handle_info(:check_master, %{initialized: true} = state) do
     case check_rosout_status() do
       {:ok, new_uri, new_pid} ->
         cond do
@@ -54,13 +72,26 @@ defmodule ROS.MasterMonitor do
     end
   end
 
+  # defp check_rosout_status() do
+  #   with {:ok, [1, _, uri]} <- MasterApi.lookup_node(@caller_id, @rosout_node),
+  #        {:ok, [1, _, pid]} <- RPC.call(uri, "getPid", [Atom.to_string(@caller_id)]) do
+  #     {:ok, uri, pid}
+  #   else
+  #     # Any failure in the chain results in an error
+  #     error -> {:error, error}
+  #   end
+  # end
+
   defp check_rosout_status() do
-    with {:ok, [1, _, uri]} <- MasterApi.lookup_node(@caller_id, @rosout_node),
-         {:ok, [1, _, pid]} <- RPC.call(uri, "getPid", [Atom.to_string(@caller_id)]) do
-      {:ok, uri, pid}
-    else
-      # Any failure in the chain results in an error
-      error -> {:error, error}
+    try do
+      with {:ok, [1, _, uri]} <- MasterApi.lookup_node(@caller_id, @rosout_node),
+           {:ok, [1, _, pid]} <- RPC.call(uri, "getPid", [Atom.to_string(@caller_id)]) do
+        {:ok, uri, pid}
+      else
+        error -> {:error, error}
+      end
+    rescue
+      e in RuntimeError -> {:error, e}
     end
   end
 
